@@ -1,0 +1,250 @@
+{
+  "issue_history": {
+    "ubuntu_disk_space": {
+      "occurrences": [
+        {
+          "timestamp": "2025-07-20T10:30:00Z",
+          "severity": "HIGH",
+          "resolution_time": 1800,
+          "success": true,
+          "root_cause": "Log files consuming 15GB in /var/log",
+          "resolution_method": "journalctl vacuum and log rotation",
+          "confidence_score": 0.92,
+          "system_context": {
+            "disk_usage_percent": 98,
+            "available_space_gb": 0.5,
+            "affected_services": ["mysql", "nginx"]
+          }
+        },
+        {
+          "timestamp": "2025-07-15T14:22:00Z",
+          "severity": "HIGH",
+          "resolution_time": 3600,
+          "success": true,
+          "root_cause": "Docker images and containers consuming 20GB",
+          "resolution_method": "docker system prune and image cleanup",
+          "confidence_score": 0.89,
+          "system_context": {
+            "disk_usage_percent": 95,
+            "available_space_gb": 2.1,
+            "affected_services": ["kubernetes", "docker"]
+          }
+        },
+        {
+          "timestamp": "2025-07-10T09:15:00Z",
+          "severity": "MEDIUM",
+          "resolution_time": 900,
+          "success": true,
+          "root_cause": "Temporary files in /tmp directory",
+          "resolution_method": "tmp directory cleanup and monitoring",
+          "confidence_score": 0.85,
+          "system_context": {
+            "disk_usage_percent": 88,
+            "available_space_gb": 5.2,
+            "affected_services": ["system-wide"]
+          }
+        }
+      ],
+      "patterns": {
+        "common_causes": ["log_accumulation", "docker_images", "temp_files"],
+        "success_rate": 1.0,
+        "avg_resolution_time": 2100,
+        "frequency_trend": "decreasing",
+        "seasonal_pattern": "none"
+      }
+    },
+    "k8s_pod_crashloop": {
+      "occurrences": [
+        {
+          "timestamp": "2025-07-22T16:45:00Z",
+          "severity": "HIGH",
+          "resolution_time": 2400,
+          "success": true,
+          "root_cause": "Application configuration missing environment variable",
+          "resolution_method": "ConfigMap update and deployment restart",
+          "confidence_score": 0.94,
+          "system_context": {
+            "namespace": "production",
+            "pod_count": 3,
+            "restart_count": 15,
+            "affected_services": ["api-gateway"]
+          }
+        },
+        {
+          "timestamp": "2025-07-18T11:20:00Z",
+          "severity": "HIGH",
+          "resolution_time": 1800,
+          "success": true,
+          "root_cause": "Image pull authentication failure",
+          "resolution_method": "Secret recreation and pod restart",
+          "confidence_score": 0.91,
+          "system_context": {
+            "namespace": "staging",
+            "pod_count": 2,
+            "restart_count": 8,
+            "affected_services": ["web-frontend"]
+          }
+        },
+        {
+          "timestamp": "2025-07-12T08:30:00Z",
+          "severity": "MEDIUM",
+          "resolution_time": 3600,
+          "success": false,
+          "root_cause": "Memory limit too low for application requirements",
+          "resolution_method": "Resource limit adjustment attempted",
+          "confidence_score": 0.78,
+          "system_context": {
+            "namespace": "development",
+            "pod_count": 1,
+            "restart_count": 25,
+            "affected_services": ["database"]
+          }
+        }
+      ],
+      "patterns": {
+        "common_causes": ["config_issues", "image_pull_errors", "resource_limits"],
+        "success_rate": 0.67,
+        "avg_resolution_time": 2600,
+        "frequency_trend": "stable",
+        "seasonal_pattern": "peak_during_deployments"
+      }
+    },
+    "gluster_split_brain": {
+      "occurrences": [
+        {
+          "timestamp": "2025-07-19T13:15:00Z",
+          "severity": "HIGH",
+          "resolution_time": 5400,
+          "success": true,
+          "root_cause": "Network partition during write operation",
+          "resolution_method": "Manual split-brain resolution with source brick selection",
+          "confidence_score": 0.96,
+          "system_context": {
+            "volume_name": "data-volume",
+            "affected_files": 5,
+            "brick_count": 6,
+            "heal_pending": 12
+          }
+        },
+        {
+          "timestamp": "2025-07-08T20:45:00Z",
+          "severity": "HIGH",
+          "resolution_time": 7200,
+          "success": true,
+          "root_cause": "Disk failure on replica brick",
+          "resolution_method": "Brick replacement and heal initiation",
+          "confidence_score": 0.93,
+          "system_context": {
+            "volume_name": "backup-volume",
+            "affected_files": 15,
+            "brick_count": 4,
+            "heal_pending": 45
+          }
+        },
+        {
+          "timestamp": "2025-06-28T15:30:00Z",
+          "severity": "MEDIUM",
+          "resolution_time": 3600,
+          "success": true,
+          "root_cause": "Concurrent write operations",
+          "resolution_method": "Application-level write coordination",
+          "confidence_score": 0.88,
+          "system_context": {
+            "volume_name": "app-data",
+            "affected_files": 2,
+            "brick_count": 3,
+            "heal_pending": 3
+          }
+        }
+      ],
+      "patterns": {
+        "common_causes": ["network_partition", "disk_failure", "concurrent_writes"],
+        "success_rate": 1.0,
+        "avg_resolution_time": 5400,
+        "frequency_trend": "decreasing",
+        "seasonal_pattern": "peak_during_maintenance"
+      }
+    },
+    "ubuntu_memory_pressure": {
+      "occurrences": [
+        {
+          "timestamp": "2025-07-21T12:00:00Z",
+          "severity": "HIGH",
+          "resolution_time": 1200,
+          "success": true,
+          "root_cause": "Memory leak in application process",
+          "resolution_method": "Process restart and memory monitoring",
+          "confidence_score": 0.87,
+          "system_context": {
+            "memory_usage_percent": 95,
+            "swap_usage_percent": 80,
+            "oom_kills": 3,
+            "affected_processes": ["java_app"]
+          }
+        },
+        {
+          "timestamp": "2025-07-16T09:30:00Z",
+          "severity": "MEDIUM",
+          "resolution_time": 600,
+          "success": true,
+          "root_cause": "High cache utilization",
+          "resolution_method": "Memory cache clearing",
+          "confidence_score": 0.82,
+          "system_context": {
+            "memory_usage_percent": 89,
+            "swap_usage_percent": 45,
+            "oom_kills": 0,
+            "affected_processes": ["system_cache"]
+          }
+        }
+      ],
+      "patterns": {
+        "common_causes": ["memory_leaks", "high_cache", "insufficient_swap"],
+        "success_rate": 1.0,
+        "avg_resolution_time": 900,
+        "frequency_trend": "stable",
+        "seasonal_pattern": "peak_during_high_load"
+      }
+    }
+  },
+  "learning_analytics": {
+    "total_issues_tracked": 12,
+    "overall_success_rate": 0.92,
+    "avg_resolution_time": 3075,
+    "most_common_categories": ["Kubernetes", "Ubuntu OS", "GlusterFS"],
+    "trend_analysis": {
+      "improving_areas": ["disk_space_management", "gluster_stability"],
+      "stable_areas": ["pod_lifecycle", "memory_management"],
+      "concerning_areas": ["network_connectivity"]
+    },
+    "predictive_indicators": {
+      "high_risk_periods": ["deployment_windows", "maintenance_schedules"],
+      "early_warning_signals": ["memory_usage_trending_up", "disk_growth_rate"],
+      "proactive_recommendations": [
+        "Implement automated log rotation",
+        "Set up memory monitoring alerts",
+        "Schedule regular GlusterFS health checks"
+      ]
+    }
+  },
+  "system_baselines": {
+    "ubuntu_os": {
+      "disk_usage_normal": 75,
+      "memory_usage_normal": 60,
+      "cpu_usage_normal": 40,
+      "service_uptime_target": 99.9
+    },
+    "kubernetes": {
+      "pod_restart_rate_normal": 0.1,
+      "node_ready_percentage": 100,
+      "resource_utilization_target": 70,
+      "deployment_success_rate": 98
+    },
+    "glusterfs": {
+      "heal_queue_normal": 0,
+      "peer_connectivity": 100,
+      "volume_uptime_target": 99.95,
+      "split_brain_tolerance": 0
+    }
+  }
+}

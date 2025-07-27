@@ -1,0 +1,498 @@
+# Expert Patterns for Ubuntu OS, Kubernetes, and GlusterFS
+# 14 Expert Patterns with Confidence Scoring and Remediation Plans
+
+patterns:
+  # Ubuntu OS Patterns (1-5)
+  ubuntu_disk_space:
+    id: 1
+    category: "Ubuntu OS"
+    name: "Disk Space Issues"
+    keywords: ["disk", "space", "full", "storage", "df", "du", "/dev/", "filesystem"]
+    regex_patterns:
+      - "disk.*space"
+      - "no.*space.*left"
+      - "filesystem.*full"
+      - "storage.*issue"
+    severity: "HIGH"
+    confidence_base: 0.85
+    description: "System running out of disk space causing application failures"
+    symptoms:
+      - "Application crashes due to inability to write files"
+      - "Log rotation failures"
+      - "Database write errors"
+      - "Temporary file creation failures"
+    remediation_steps:
+      - step: 1
+        action: "Check disk usage"
+        command: "df -h"
+        safety_level: "SAFE"
+        description: "Display filesystem disk space usage"
+      - step: 2
+        action: "Find large files"
+        command: "du -sh /* | sort -h"
+        safety_level: "SAFE"
+        description: "Identify directories consuming most space"
+      - step: 3
+        action: "Clean package cache"
+        command: "sudo apt-get clean && sudo apt-get autoclean"
+        safety_level: "MEDIUM"
+        description: "Remove cached package files"
+      - step: 4
+        action: "Remove old logs"
+        command: "sudo journalctl --vacuum-time=7d"
+        safety_level: "MEDIUM"
+        description: "Clean systemd journal logs older than 7 days"
+
+  ubuntu_memory_pressure:
+    id: 2
+    category: "Ubuntu OS"
+    name: "Memory Pressure"
+    keywords: ["memory", "ram", "oom", "killed", "swap", "free", "available"]
+    regex_patterns:
+      - "memory.*pressure"
+      - "out.*of.*memory"
+      - "oom.*killer"
+      - "swap.*usage"
+    severity: "HIGH"
+    confidence_base: 0.82
+    description: "System experiencing high memory usage leading to performance issues"
+    symptoms:
+      - "Applications being killed by OOM killer"
+      - "System sluggishness"
+      - "High swap usage"
+      - "Memory allocation failures"
+    remediation_steps:
+      - step: 1
+        action: "Check memory usage"
+        command: "free -h && cat /proc/meminfo"
+        safety_level: "SAFE"
+        description: "Display current memory usage statistics"
+      - step: 2
+        action: "Identify memory hogs"
+        command: "ps aux --sort=-%mem | head -10"
+        safety_level: "SAFE"
+        description: "List top memory consuming processes"
+      - step: 3
+        action: "Clear page cache"
+        command: "sudo sync && sudo echo 3 > /proc/sys/vm/drop_caches"
+        safety_level: "MEDIUM"
+        description: "Free up memory by clearing caches"
+
+  ubuntu_service_failure:
+    id: 3
+    category: "Ubuntu OS"
+    name: "Service Failures"
+    keywords: ["service", "systemd", "failed", "inactive", "systemctl", "daemon"]
+    regex_patterns:
+      - "service.*failed"
+      - "systemd.*error"
+      - "daemon.*stopped"
+      - "unit.*failed"
+    severity: "MEDIUM"
+    confidence_base: 0.88
+    description: "Critical system services have failed or stopped unexpectedly"
+    remediation_steps:
+      - step: 1
+        action: "Check failed services"
+        command: "systemctl --failed"
+        safety_level: "SAFE"
+        description: "List all failed systemd units"
+      - step: 2
+        action: "Restart failed services"
+        command: "sudo systemctl restart <service-name>"
+        safety_level: "MEDIUM"
+        description: "Attempt to restart failed services"
+
+  ubuntu_network_connectivity:
+    id: 4
+    category: "Ubuntu OS"
+    name: "Network Connectivity Issues"
+    keywords: ["network", "connectivity", "dns", "ping", "route", "interface"]
+    regex_patterns:
+      - "network.*issue"
+      - "connectivity.*problem"
+      - "dns.*resolution"
+      - "route.*table"
+    severity: "HIGH"
+    confidence_base: 0.79
+    description: "Network connectivity problems affecting system communication"
+    remediation_steps:
+      - step: 1
+        action: "Test connectivity"
+        command: "ping -c 4 8.8.8.8"
+        safety_level: "SAFE"
+        description: "Test basic internet connectivity"
+      - step: 2
+        action: "Check network interfaces"
+        command: "ip addr show"
+        safety_level: "SAFE"
+        description: "Display network interface configuration"
+
+  ubuntu_cpu_high_usage:
+    id: 5
+    category: "Ubuntu OS"
+    name: "High CPU Usage"
+    keywords: ["cpu", "high", "usage", "load", "process", "performance"]
+    regex_patterns:
+      - "cpu.*high"
+      - "high.*load"
+      - "performance.*issue"
+      - "system.*slow"
+    severity: "MEDIUM"
+    confidence_base: 0.84
+    description: "System experiencing high CPU utilization affecting performance"
+    remediation_steps:
+      - step: 1
+        action: "Check CPU usage"
+        command: "top -bn1 | head -20"
+        safety_level: "SAFE"
+        description: "Display current CPU usage and top processes"
+      - step: 2
+        action: "Identify CPU hogs"
+        command: "ps aux --sort=-%cpu | head -10"
+        safety_level: "SAFE"
+        description: "List top CPU consuming processes"
+
+  # Kubernetes Patterns (6-10)
+  k8s_pod_crashloop:
+    id: 6
+    category: "Kubernetes"
+    name: "Pod CrashLoopBackOff"
+    keywords: ["crashloopbackoff", "pod", "crashing", "restart", "container"]
+    regex_patterns:
+      - "crashloopbackoff"
+      - "pod.*crashing"
+      - "container.*restart"
+      - "exit.*code"
+    severity: "HIGH"
+    confidence_base: 0.92
+    description: "Pods are stuck in CrashLoopBackOff state due to application or configuration issues"
+    symptoms:
+      - "Pods repeatedly crashing and restarting"
+      - "Service unavailability"
+      - "Application startup failures"
+      - "Configuration errors"
+    remediation_steps:
+      - step: 1
+        action: "List problematic pods"
+        command: "kubectl get pods --all-namespaces | grep -E '(CrashLoopBackOff|Error)'"
+        safety_level: "SAFE"
+        description: "Identify pods in error states"
+      - step: 2
+        action: "Check pod logs"
+        command: "kubectl logs <pod-name> --previous"
+        safety_level: "SAFE"
+        description: "Examine logs from previous container instance"
+      - step: 3
+        action: "Describe pod events"
+        command: "kubectl describe pod <pod-name>"
+        safety_level: "SAFE"
+        description: "Get detailed pod information and events"
+      - step: 4
+        action: "Restart deployment"
+        command: "kubectl rollout restart deployment/<deployment-name>"
+        safety_level: "MEDIUM"
+        description: "Restart the deployment to resolve transient issues"
+
+  k8s_node_not_ready:
+    id: 7
+    category: "Kubernetes"
+    name: "Node Not Ready"
+    keywords: ["node", "notready", "ready", "unavailable", "cordoned"]
+    regex_patterns:
+      - "node.*not.*ready"
+      - "node.*unavailable"
+      - "ready.*false"
+      - "node.*cordoned"
+    severity: "HIGH"
+    confidence_base: 0.89
+    description: "Kubernetes nodes are in NotReady state affecting workload scheduling"
+    remediation_steps:
+      - step: 1
+        action: "Check node status"
+        command: "kubectl get nodes"
+        safety_level: "SAFE"
+        description: "Display status of all cluster nodes"
+      - step: 2
+        action: "Describe problematic node"
+        command: "kubectl describe node <node-name>"
+        safety_level: "SAFE"
+        description: "Get detailed node information and conditions"
+      - step: 3
+        action: "Check node logs"
+        command: "kubectl logs -n kube-system -l component=kubelet"
+        safety_level: "SAFE"
+        description: "Examine kubelet logs for errors"
+
+  k8s_pvc_pending:
+    id: 8
+    category: "Kubernetes"
+    name: "PVC Pending"
+    keywords: ["pvc", "pending", "storage", "volume", "claim", "persistent"]
+    regex_patterns:
+      - "pvc.*pending"
+      - "volume.*claim.*pending"
+      - "storage.*pending"
+      - "persistent.*volume"
+    severity: "MEDIUM"
+    confidence_base: 0.86
+    description: "Persistent Volume Claims stuck in Pending state due to storage issues"
+    remediation_steps:
+      - step: 1
+        action: "Check PVC status"
+        command: "kubectl get pvc --all-namespaces"
+        safety_level: "SAFE"
+        description: "List all PVCs and their status"
+      - step: 2
+        action: "Check available PVs"
+        command: "kubectl get pv"
+        safety_level: "SAFE"
+        description: "List available Persistent Volumes"
+      - step: 3
+        action: "Check storage classes"
+        command: "kubectl get storageclass"
+        safety_level: "SAFE"
+        description: "Verify storage class configuration"
+
+  k8s_resource_quota_exceeded:
+    id: 9
+    category: "Kubernetes"
+    name: "Resource Quota Exceeded"
+    keywords: ["quota", "exceeded", "resource", "limit", "cpu", "memory"]
+    regex_patterns:
+      - "quota.*exceeded"
+      - "resource.*limit"
+      - "limit.*exceeded"
+      - "insufficient.*resources"
+    severity: "MEDIUM"
+    confidence_base: 0.83
+    description: "Resource quotas preventing pod scheduling or resource allocation"
+    remediation_steps:
+      - step: 1
+        action: "Check resource quotas"
+        command: "kubectl get resourcequota --all-namespaces"
+        safety_level: "SAFE"
+        description: "List all resource quotas across namespaces"
+      - step: 2
+        action: "Check resource usage"
+        command: "kubectl describe resourcequota -n <namespace>"
+        safety_level: "SAFE"
+        description: "Get detailed quota usage information"
+
+  k8s_network_policy_blocking:
+    id: 10
+    category: "Kubernetes"
+    name: "Network Policy Blocking"
+    keywords: ["network", "policy", "blocked", "connectivity", "ingress", "egress"]
+    regex_patterns:
+      - "network.*policy"
+      - "connectivity.*blocked"
+      - "ingress.*denied"
+      - "egress.*denied"
+    severity: "MEDIUM"
+    confidence_base: 0.77
+    description: "Network policies blocking legitimate traffic between pods or services"
+    remediation_steps:
+      - step: 1
+        action: "List network policies"
+        command: "kubectl get networkpolicy --all-namespaces"
+        safety_level: "SAFE"
+        description: "Display all network policies in the cluster"
+      - step: 2
+        action: "Test connectivity"
+        command: "kubectl exec -it <pod> -- nc -zv <target-service> <port>"
+        safety_level: "SAFE"
+        description: "Test network connectivity between pods"
+
+  # GlusterFS Patterns (11-14)
+  gluster_split_brain:
+    id: 11
+    category: "GlusterFS"
+    name: "Split-brain Detection"
+    keywords: ["split", "brain", "conflict", "gluster", "heal", "arbiter"]
+    regex_patterns:
+      - "split.*brain"
+      - "gluster.*conflict"
+      - "heal.*pending"
+      - "arbiter.*issue"
+    severity: "HIGH"
+    confidence_base: 0.94
+    description: "GlusterFS split-brain condition detected requiring manual intervention"
+    symptoms:
+      - "File access failures"
+      - "Inconsistent data across replicas"
+      - "Heal operations stuck"
+      - "Application read/write errors"
+    remediation_steps:
+      - step: 1
+        action: "Check heal status"
+        command: "gluster volume heal <volume-name> info"
+        safety_level: "SAFE"
+        description: "Display heal information for the volume"
+      - step: 2
+        action: "List split-brain files"
+        command: "gluster volume heal <volume-name> info split-brain"
+        safety_level: "SAFE"
+        description: "Identify files in split-brain state"
+      - step: 3
+        action: "Resolve split-brain"
+        command: "gluster volume heal <volume-name> split-brain source-brick <brick-path> <file-path>"
+        safety_level: "HIGH"
+        description: "Manually resolve split-brain by choosing source"
+
+  gluster_peer_disconnected:
+    id: 12
+    category: "GlusterFS"
+    name: "Peer Disconnection"
+    keywords: ["peer", "disconnected", "gluster", "node", "probe", "cluster"]
+    regex_patterns:
+      - "peer.*disconnected"
+      - "node.*unreachable"
+      - "gluster.*peer"
+      - "cluster.*node"
+    severity: "HIGH"
+    confidence_base: 0.91
+    description: "GlusterFS peer nodes are disconnected affecting cluster operations"
+    remediation_steps:
+      - step: 1
+        action: "Check peer status"
+        command: "gluster peer status"
+        safety_level: "SAFE"
+        description: "Display status of all trusted peers"
+      - step: 2
+        action: "Check network connectivity"
+        command: "ping -c 4 <peer-ip>"
+        safety_level: "SAFE"
+        description: "Test network connectivity to peer nodes"
+      - step: 3
+        action: "Re-probe peer"
+        command: "gluster peer probe <peer-hostname>"
+        safety_level: "MEDIUM"
+        description: "Re-establish connection with disconnected peer"
+
+  gluster_volume_offline:
+    id: 13
+    category: "GlusterFS"
+    name: "Volume Offline"
+    keywords: ["volume", "offline", "stopped", "gluster", "start", "mount"]
+    regex_patterns:
+      - "volume.*offline"
+      - "volume.*stopped"
+      - "gluster.*volume.*start"
+      - "mount.*failed"
+    severity: "HIGH"
+    confidence_base: 0.89
+    description: "GlusterFS volume is offline and not accessible to clients"
+    remediation_steps:
+      - step: 1
+        action: "Check volume status"
+        command: "gluster volume status <volume-name>"
+        safety_level: "SAFE"
+        description: "Display detailed volume status information"
+      - step: 2
+        action: "Start volume"
+        command: "gluster volume start <volume-name>"
+        safety_level: "MEDIUM"
+        description: "Start the offline volume"
+      - step: 3
+        action: "Check mount points"
+        command: "mount | grep gluster"
+        safety_level: "SAFE"
+        description: "Verify volume mount points on clients"
+
+  gluster_brick_offline:
+    id: 14
+    category: "GlusterFS"
+    name: "Brick Offline"
+    keywords: ["brick", "offline", "down", "gluster", "replace", "storage"]
+    regex_patterns:
+      - "brick.*offline"
+      - "brick.*down"
+      - "storage.*brick"
+      - "brick.*failed"
+    severity: "MEDIUM"
+    confidence_base: 0.87
+    description: "Individual GlusterFS bricks are offline affecting volume redundancy"
+    remediation_steps:
+      - step: 1
+        action: "Check brick status"
+        command: "gluster volume status <volume-name> detail"
+        safety_level: "SAFE"
+        description: "Display detailed brick status information"
+      - step: 2
+        action: "Check brick process"
+        command: "ps aux | grep glusterfsd"
+        safety_level: "SAFE"
+        description: "Verify brick processes are running"
+      - step: 3
+        action: "Start brick process"
+        command: "gluster volume start <volume-name> force"
+        safety_level: "MEDIUM"
+        description: "Force start volume to bring bricks online"
+
+# Additional configuration
+confidence_adjustments:
+  historical_match: 0.15  # Boost confidence if similar issue resolved before
+  system_context: 0.10    # Boost confidence based on current system state
+  pattern_specificity: 0.05  # Boost confidence for more specific pattern matches
+
+safety_levels:
+  SAFE: "Read-only operations, no system modifications"
+  MEDIUM: "Service restarts, configuration changes, requires confirmation"
+  HIGH: "Data modifications, destructive operations, requires explicit approval"
+
+learning_weights:
+  success_rate: 0.4       # Weight for historical success rate
+  frequency: 0.3          # Weight for issue frequency
+  recency: 0.2            # Weight for recent occurrences
+  specificity: 0.1        # Weight for pattern specificity
+
+additional_patterns:
+  - pattern: "GlusterFS Split-Brain"
+    description: "Indicates that there are conflicting versions of a file in GlusterFS."
+    remediation_steps:
+      - "Identify the split-brain files."
+      - "Resolve conflicts manually or using GlusterFS commands."
+      - "Monitor the health of the GlusterFS volumes."
+
+  - pattern: "Kubernetes API Unreachable"
+    description: "Indicates that the Kubernetes API server is not reachable."
+    remediation_steps:
+      - "Check the API server logs for errors."
+      - "Verify network connectivity to the API server."
+      - "Ensure that the API server is running and healthy."
+
+  - pattern: "Service Account Issues"
+    description: "Indicates that there are problems with service account permissions."
+    remediation_steps:
+      - "Review the role bindings and permissions."
+      - "Ensure that the service account is correctly configured."
+      - "Check for any recent changes to RBAC policies."
+
+  - pattern: "Resource Quota Exceeded"
+    description: "Indicates that a resource quota has been exceeded in a namespace."
+    remediation_steps:
+      - "Review the resource usage in the namespace."
+      - "Identify and delete unnecessary resources."
+      - "Request an increase in resource quotas if needed."
+
+  - pattern: "Application Crash"
+    description: "Indicates that an application has crashed unexpectedly."
+    remediation_steps:
+      - "Check application logs for error messages."
+      - "Inspect the application configuration."
+      - "Restart the application and monitor its behavior."
+
+  - pattern: "Configuration Errors"
+    description: "Indicates that there are errors in the configuration files."
+    remediation_steps:
+      - "Validate configuration files for syntax errors."
+      - "Review the application documentation for correct settings."
+      - "Test configurations in a staging environment before deployment."
+
+  - pattern: "Insufficient Permissions"
+    description: "Indicates that a user or service account lacks necessary permissions."
+    remediation_steps:
+      - "Review the permissions assigned to the user or service account."
+      - "Adjust role bindings to grant necessary permissions."
+      - "Consult the documentation for required permissions."

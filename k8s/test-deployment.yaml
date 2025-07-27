@@ -1,0 +1,48 @@
+# Temporary Expert LLM System Deployment for Testing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expert-llm-system-test
+  namespace: expert-llm-system
+  labels:
+    app: expert-llm-system-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: expert-llm-system-test
+  template:
+    metadata:
+      labels:
+        app: expert-llm-system-test
+    spec:
+      containers:
+      - name: expert-llm-test
+        image: python:3.11-slim
+        command: ["/bin/bash"]
+        args: ["-c", "pip install streamlit && echo 'import streamlit as st; st.title(\"Expert LLM System - Live Demo\"); st.success(\"🚀 System is running in Kubernetes!\"); st.write(\"Building full system...\")' > app.py && streamlit run app.py --server.port=8501 --server.address=0.0.0.0"]
+        ports:
+        - containerPort: 8501
+          name: http
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: expert-llm-test-service
+  namespace: expert-llm-system
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 8501
+    protocol: TCP
+    name: http
+  selector:
+    app: expert-llm-system-test

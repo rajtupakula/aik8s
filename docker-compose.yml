@@ -1,0 +1,164 @@
+version: '3.8'
+
+services:
+  expert-llm-system:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: application
+    image: expert-llm-system:latest
+    container_name: expert-llm-system
+    ports:
+      - "8501:8501"
+    volumes:
+      # Persistent data storage
+      - expert_data:/app/data
+      - expert_logs:/app/logs
+      - expert_temp:/app/temp
+      # Configuration overrides (optional)
+      - ./src/data/expert_patterns.yaml:/app/src/data/expert_patterns.yaml:ro
+    environment:
+      # Streamlit configuration
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+      - STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=true
+      
+      # Application configuration
+      - LOG_LEVEL=INFO
+      - EXPERT_PATTERNS_FILE=/app/src/data/expert_patterns.yaml
+      - HISTORICAL_ISSUES_FILE=/app/data/historical_issues.json
+      
+      # Security settings
+      - PYTHONPATH=/app/src
+      - SAFETY_MODE=enabled
+      - REQUIRE_MANUAL_APPROVAL=true
+      
+      # Optional: Ollama configuration (if using external Ollama)
+      - OLLAMA_HOST=ollama:11434
+      - OLLAMA_MODEL=llama3.2
+    networks:
+      - expert-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    depends_on:
+      - ollama
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.expert-llm.rule=Host(`expert-llm.local`)"
+      - "traefik.http.services.expert-llm.loadbalancer.server.port=8501"
+
+  # Optional: Ollama service for local LLM processing
+  ollama:
+    image: ollama/ollama:latest
+    container_name: expert-llm-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    networks:
+      - expert-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Optional: Monitoring with Prometheus (for production)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: expert-llm-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - expert-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Optional: Grafana for visualization (for production)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: expert-llm-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=expert-llm-admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - expert-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    depends_on:
+      - prometheus
+
+networks:
+  expert-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  expert_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  expert_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+  expert_temp:
+    driver: local
+  ollama_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

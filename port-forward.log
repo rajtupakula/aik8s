@@ -1,0 +1,57 @@
+Forwarding from 127.0.0.1:8501 -> 8501
+Forwarding from [::1]:8501 -> 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+Handling connection for 8501
+E0726 17:49:38.007505   24613 portforward.go:424] "Unhandled Error" err="an error occurred forwarding 8501 -> 8501: error forwarding port 8501 to pod 3ba0cd0cd8dbd827b8ff633de56f0dcfbdeddb95009e987252b43e689afa6002, uid : sandbox 3ba0cd0cd8dbd827b8ff633de56f0dcfbdeddb95009e987252b43e689afa6002 is not running"
+E0726 17:49:38.008175   24613 portforward.go:424] "Unhandled Error" err="an error occurred forwarding 8501 -> 8501: error forwarding port 8501 to pod 3ba0cd0cd8dbd827b8ff633de56f0dcfbdeddb95009e987252b43e689afa6002, uid : sandbox 3ba0cd0cd8dbd827b8ff633de56f0dcfbdeddb95009e987252b43e689afa6002 is not running"
+error: lost connection to pod

@@ -1,0 +1,152 @@
+# Ollama LLM Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: expert-llm-system
+  labels:
+    app: ollama
+    component: llm-backend
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # Ollama doesn't support multiple replicas
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+        component: llm-backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        ports:
+        - containerPort: 11434
+          name: api
+          protocol: TCP
+        env:
+        - name: OLLAMA_HOST
+          value: "0.0.0.0:11434"
+        - name: OLLAMA_ORIGINS
+          value: "*"
+        - name: OLLAMA_MODELS
+          value: "/root/.ollama/models"
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /api/tags
+            port: 11434
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/tags
+            port: 11434
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: ollama-data
+        persistentVolumeClaim:
+          claimName: ollama-data-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-data-pvc
+  namespace: expert-llm-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi  # Smaller for local development
+  storageClassName: standard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-service
+  namespace: expert-llm-system
+  labels:
+    app: ollama
+    component: llm-backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 11434
+    targetPort: 11434
+    protocol: TCP
+    name: api
+  selector:
+    app: ollama
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-model-pull
+  namespace: expert-llm-system
+  labels:
+    app: ollama
+    component: model-setup
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: model-puller
+        image: curlimages/curl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for Ollama service to be ready..."
+          until curl -f http://ollama-service:11434/api/tags; do
+            echo "Waiting for Ollama..."
+            sleep 10
+          done
+          
+          echo "Pulling Llama 3.2 model..."
+          curl -X POST http://ollama-service:11434/api/pull \
+            -H "Content-Type: application/json" \
+            -d '{"name": "llama3.2"}'
+          
+          echo "Model pull completed"
+      - name: model-verification
+        image: curlimages/curl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Verifying model installation..."
+          sleep 30
+          curl -X POST http://ollama-service:11434/api/generate \
+            -H "Content-Type: application/json" \
+            -d '{"model": "llama3.2", "prompt": "Hello", "stream": false}'
+          echo "Model verification completed"
+  backoffLimit: 3
